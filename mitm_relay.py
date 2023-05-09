@@ -234,19 +234,24 @@ class MitmRelay():
 
 			receiving, _, _ = select.select([relay_sock], [], [])
 
-			if relay_sock in receiving:
+			try:
+       
+				if relay_sock in receiving:
 
-				data, addr = relay_sock.recvfrom(self.cfg.recv_bufsize)
+					data, addr = relay_sock.recvfrom(self.cfg.recv_bufsize)
 
-				if addr == server:
-					data = self.proxify(data, client, server, to_server=False)
-					relay_sock.sendto(data, client)
+					if addr == server:
+						data = self.proxify(data, client, server, to_server=False)
+						relay_sock.sendto(data, client)
 
-				else:
-					client = addr
-					data = self.proxify(data, client, server, to_server=True)
-					relay_sock.sendto(data, server)
-
+					else:
+						client = addr
+						data = self.proxify(data, client, server, to_server=True)
+						relay_sock.sendto(data, server)
+     
+			except (ConnectionResetError, TimeoutError) as e:
+				p("[!] %s" % str(e), 1, 31)
+    
 	def proxify(self, message, client_peer, server_peer, to_server=True):
 
 		orig_message = message
